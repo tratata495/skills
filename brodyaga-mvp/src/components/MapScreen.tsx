@@ -10,6 +10,8 @@ import { fetchRoutePreview } from "@/lib/openRouteService";
 import type { AiRouteResult } from "@/lib/aiRoute";
 
 const MOSCOW_MKAD_CENTER: LatLngExpression = [55.751244, 37.618423];
+const MOSCOW: [number, number] = [55.7558, 37.6173];
+const TVER: [number, number] = [56.8587, 35.9176];
 
 function RecenterOnUser({ center }: { center: LatLngExpression | null }) {
   const map = useMap();
@@ -35,10 +37,32 @@ export default function MapScreen() {
   const [currentPosition, setCurrentPosition] = useState<[number, number] | null>(null);
   const [destination, setDestination] = useState<[number, number] | null>(null);
   const [path, setPath] = useState<[number, number][]>([]);
+  const [moscowTverRoute, setMoscowTverRoute] = useState<[number, number][]>([]);
   const [requestText, setRequestText] = useState("");
   const [loadingAi, setLoadingAi] = useState(false);
   const [aiResult, setAiResult] = useState<AiRouteResult | null>(null);
   const [geoStatus, setGeoStatus] = useState("Фокус по умолчанию: Москва");
+
+  useEffect(() => {
+    const fetchMoscowTverRoute = async () => {
+      try {
+        const response = await fetch(
+          `https://router.project-osrm.org/route/v1/driving/${MOSCOW[1]},${MOSCOW[0]};${TVER[1]},${TVER[0]}?overview=full&geometries=geojson`
+        );
+        const data = await response.json();
+        const coordinates = data?.routes?.[0]?.geometry?.coordinates;
+        if (!coordinates) return;
+
+        setMoscowTverRoute(
+          coordinates.map(([lng, lat]: [number, number]) => [lat, lng])
+        );
+      } catch {
+        setMoscowTverRoute([MOSCOW, TVER]);
+      }
+    };
+
+    fetchMoscowTverRoute();
+  }, []);
 
   useEffect(() => {
     if (!currentPosition || !destination) {
@@ -111,6 +135,9 @@ export default function MapScreen() {
         />
         <TapToSetDestination onSetDestination={setDestination} />
         <RecenterOnUser center={currentPosition} />
+        <Marker position={MOSCOW} />
+        <Marker position={TVER} />
+        {moscowTverRoute.length > 1 ? <Polyline positions={moscowTverRoute} pathOptions={{ color: "#ffd166", weight: 4 }} /> : null}
         {currentPosition ? <Marker position={currentPosition} /> : null}
         {destination ? <Marker position={destination} /> : null}
         {routePreview.length > 1 ? <Polyline positions={routePreview} pathOptions={{ color: "#7df9ff", weight: 5 }} /> : null}
