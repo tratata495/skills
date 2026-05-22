@@ -46,10 +46,14 @@ export default function MapScreen() {
       return;
     }
 
-    fetchRoutePreview(currentPosition, destination)
+    fetchRoutePreview(currentPosition, destination, aiResult?.preferences.transport ?? "walking", {
+      avoidHighways: aiResult?.preferences.avoidHighways,
+      maximizeParks: aiResult?.preferences.maximizeParks,
+      preferWaterfront: aiResult?.preferences.preferWaterfront
+    })
       .then((route) => setPath(route.coordinates))
       .catch(() => setPath([currentPosition, destination]));
-  }, [currentPosition, destination]);
+  }, [currentPosition, destination, aiResult]);
 
   const routePreview = useMemo(() => {
     if (path.length > 1) return path;
@@ -145,6 +149,9 @@ export default function MapScreen() {
         {aiResult ? (
           <>
             <p className="mt-2 text-sm text-cyan-100">{aiResult.summary}</p>
+            <p className="mt-1 text-[11px] uppercase tracking-[0.15em] text-cyan-300/90">
+              РЕЖИМ: {aiResult.preferences.transport === "cycling" ? "🚲 Велосипед" : "🚶 Пешком"}
+            </p>
             <p className="mt-2 text-xs text-cyan-200/90">Задание: {aiResult.challenge}</p>
             <pre className="mt-2 max-h-32 overflow-auto rounded-lg bg-slate-900/70 p-2 text-[10px] text-cyan-100">{JSON.stringify(aiResult.preferences, null, 2)}</pre>
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
