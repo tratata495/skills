@@ -30,7 +30,7 @@ export async function POST(request: Request) {
           {
             role: "system",
             content:
-              "Преобразуй запрос о городском исследовании в JSON. Верни только валидный JSON с ключами preferences, summary, challenge. summary и challenge пиши строго на русском, кратко и атмосферно в сталкерском/урбан-вайбе. preferences: mood string, transport walking|cycling, avoidHighways boolean, maximizeParks boolean, preferWaterfront boolean, industrialBias number 0-1, stalkerVibe number 0-1, radiusKm number, timeOfDay day|night|any."
+              "Преобразуй запрос о городском исследовании в JSON. Верни только валидный JSON с ключами preferences, summary, challenge. summary и challenge пиши строго на русском, кратко и атмосферно в сталкерском/урбан-вайбе. Явно распознавай режим ходьбы/велосипеда из запроса. Велосипед: приоритет cycleways, asphalt, gravel, quiet streets, riverside, low traffic; избегать stairs, highways, dangerous crossings, mud, excessive elevation. Пешком: разрешать trails, park shortcuts, pedestrian zones, forest paths, narrow passages, stairways; допускается более исследовательский и атмосферный темп. preferences: mood string, transport walking|cycling, avoidHighways boolean, maximizeParks boolean, preferWaterfront boolean, industrialBias number 0-1, stalkerVibe number 0-1, radiusKm number, timeOfDay day|night|any."
           },
           {
             role: "user",
