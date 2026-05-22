@@ -38,7 +38,7 @@ export default function MapScreen() {
   const [requestText, setRequestText] = useState("");
   const [loadingAi, setLoadingAi] = useState(false);
   const [aiResult, setAiResult] = useState<AiRouteResult | null>(null);
-  const [geoStatus, setGeoStatus] = useState("Using default Moscow focus");
+  const [geoStatus, setGeoStatus] = useState("Фокус по умолчанию: Москва");
 
   useEffect(() => {
     if (!currentPosition || !destination) {
@@ -59,18 +59,18 @@ export default function MapScreen() {
 
   const requestGeo = () => {
     if (!navigator.geolocation) {
-      setGeoStatus("Geolocation unavailable");
+      setGeoStatus("Геолокация недоступна");
       return;
     }
 
-    setGeoStatus("Locating...");
+    setGeoStatus("Ищем точку...");
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setCurrentPosition([position.coords.latitude, position.coords.longitude]);
-        setGeoStatus("Live position locked");
+        setGeoStatus("Точка зафиксирована");
       },
       () => {
-        setGeoStatus("Location blocked, using Moscow");
+        setGeoStatus("Доступ закрыт, работаем по Москве");
       },
       {
         enableHighAccuracy: true,
@@ -118,22 +118,22 @@ export default function MapScreen() {
         type="button"
         onClick={requestGeo}
         className="absolute right-3 top-3 z-[1000] h-12 w-12 rounded-full border border-cyan-300/40 bg-slate-900/85 text-xl text-cyan-200 shadow-lg shadow-cyan-500/20 backdrop-blur active:scale-95"
-        aria-label="Use current location"
+        aria-label="Использовать текущую точку"
       >
         ⦿
       </button>
 
       <section className="ai-panel">
-        <p className="text-[10px] uppercase tracking-[0.25em] text-cyan-300/80">БРОДЯГА AI / Day 2</p>
+        <p className="text-[10px] uppercase tracking-[0.25em] text-cyan-300/80">БРОДЯГА AI / РЕЙД</p>
         <div className="mt-2 flex gap-2">
           <input
             value={requestText}
             onChange={(event) => setRequestText(event.target.value)}
-            placeholder="night ride near water"
+            placeholder="Ночной маршрут вдоль воды"
             className="flex-1 rounded-xl border border-cyan-300/25 bg-slate-900/80 px-3 py-2 text-sm text-cyan-50 outline-none placeholder:text-slate-400"
           />
           <button onClick={runAiRoute} disabled={loadingAi} className="rounded-xl bg-cyan-300/90 px-3 text-xs font-semibold text-slate-900 disabled:opacity-50">
-            {loadingAi ? "..." : "SCAN"}
+            {loadingAi ? "..." : "АНАЛИЗ"}
           </button>
         </div>
         <p className="mt-2 text-[11px] text-cyan-100/75">{geoStatus}</p>
@@ -141,12 +141,23 @@ export default function MapScreen() {
 
       <section className="bottom-sheet">
         <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-cyan-200/50" />
-        <p className="text-xs text-slate-200">Tap map to place destination.</p>
+        <p className="text-xs text-slate-200">Коснись карты, чтобы отметить цель.</p>
         {aiResult ? (
           <>
             <p className="mt-2 text-sm text-cyan-100">{aiResult.summary}</p>
-            <p className="mt-2 text-xs text-cyan-200/90">Challenge: {aiResult.challenge}</p>
+            <p className="mt-2 text-xs text-cyan-200/90">Задание: {aiResult.challenge}</p>
             <pre className="mt-2 max-h-32 overflow-auto rounded-lg bg-slate-900/70 p-2 text-[10px] text-cyan-100">{JSON.stringify(aiResult.preferences, null, 2)}</pre>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <button type="button" className="rounded-lg border border-cyan-300/30 bg-slate-900/70 px-3 py-2 text-[11px] font-semibold text-cyan-100">
+                ВЫЙТИ НА МАРШРУТ
+              </button>
+              <button type="button" className="rounded-lg border border-cyan-300/30 bg-slate-900/70 px-3 py-2 text-[11px] font-semibold text-cyan-100">
+                СОХРАНИТЬ
+              </button>
+              <button type="button" className="rounded-lg border border-cyan-300/30 bg-slate-900/70 px-3 py-2 text-[11px] font-semibold text-cyan-100">
+                ЭКСПОРТ GPX
+              </button>
+            </div>
           </>
         ) : null}
       </section>

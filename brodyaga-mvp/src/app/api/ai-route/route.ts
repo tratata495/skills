@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   const { prompt } = (await request.json()) as { prompt?: string };
 
   if (!prompt?.trim()) {
-    return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+    return NextResponse.json({ error: "Нужен запрос для маршрута" }, { status: 400 });
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
           {
             role: "system",
             content:
-              "You convert urban exploration route requests into JSON. Return only valid JSON with keys: preferences, summary, challenge. preferences keys: mood string, transport walking|cycling, avoidHighways boolean, maximizeParks boolean, preferWaterfront boolean, industrialBias number 0-1, stalkerVibe number 0-1, radiusKm number, timeOfDay day|night|any."
+              "Преобразуй запрос о городском исследовании в JSON. Верни только валидный JSON с ключами preferences, summary, challenge. summary и challenge пиши строго на русском, кратко и атмосферно в сталкерском/урбан-вайбе. preferences: mood string, transport walking|cycling, avoidHighways boolean, maximizeParks boolean, preferWaterfront boolean, industrialBias number 0-1, stalkerVibe number 0-1, radiusKm number, timeOfDay day|night|any."
           },
           {
             role: "user",
