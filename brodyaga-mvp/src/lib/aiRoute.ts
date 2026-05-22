@@ -18,11 +18,11 @@ export interface AiRouteResult {
 
 export const fallbackAiRoute = (request: string): AiRouteResult => {
   const normalized = request.toLowerCase();
-  const isNight = normalized.includes("night");
-  const water = normalized.includes("water");
-  const industrial = normalized.includes("industrial");
-  const parks = normalized.includes("park");
-  const stalker = normalized.includes("stalker") || normalized.includes("vibe");
+  const isNight = normalized.includes("night") || normalized.includes("ноч");
+  const water = normalized.includes("water") || normalized.includes("вод");
+  const industrial = normalized.includes("industrial") || normalized.includes("пром");
+  const parks = normalized.includes("park") || normalized.includes("парк");
+  const stalker = normalized.includes("stalker") || normalized.includes("vibe") || normalized.includes("сталкер");
 
   return {
     preferences: {
@@ -36,8 +36,7 @@ export const fallbackAiRoute = (request: string): AiRouteResult => {
       radiusKm: 8,
       timeOfDay: isNight ? "night" : "any"
     },
-    summary:
-      "Low-light reconnaissance loop through textured city pockets with tactical visibility and urban contrast.",
-    challenge: "Stay off major roads for 20 minutes and document three unexpected landmarks."
+    summary: "Сумеречная петля через тихие кварталы: больше фактуры, меньше шума и трасс.",
+    challenge: "20 минут держись вне магистралей и отметь три неожиданные точки."
   };
 };
