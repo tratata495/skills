@@ -1,17 +1,20 @@
-# БРОДЯГА MVP — Day 1
+# БРОДЯГА MVP — Day 2
 
-Mobile-first Next.js + Leaflet prototype focused on immersive fullscreen map navigation.
+AI-powered urban exploration map companion built with Next.js + Leaflet.
 
-## What is implemented
+## Implemented in Day 2
 
-- Next.js App Router structure with TypeScript.
-- TailwindCSS v4 setup and dark tactical/cyberpunk baseline styles.
-- Fullscreen mobile map with OpenStreetMap tiles.
-- Geolocation trigger (battery-aware settings with cached position preference).
-- Floating action button for "locate me".
-- Bottom sheet panel UI for minimal controls.
-- Route polyline preview foundation (current position -> tapped destination).
-- OpenRouteService scaffold in `src/lib/openRouteService.ts`.
+- OpenAI route-intent integration via `/api/ai-route` endpoint.
+- Natural-language route request input in floating AI panel.
+- Model output includes:
+  - route preferences JSON
+  - atmospheric route summary
+  - exploration challenge
+- Lightweight fallback parser when API key is absent.
+- OpenRouteService polyline fetching wired into map route preview.
+- Geolocation status handling improved with clearer fallback states.
+- Default map focus changed to Moscow (within MKAD view).
+- Mobile-first tactical UI polish for floating panel + bottom sheet.
 
 ## Run locally
 
@@ -20,22 +23,11 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000` and use mobile viewport in browser devtools.
-
 ## Environment
 
-For OpenRouteService API integration, set:
-
 ```bash
-NEXT_PUBLIC_ORS_API_KEY=your_key_here
+OPENAI_API_KEY=your_openai_key
+NEXT_PUBLIC_ORS_API_KEY=your_ors_key
 ```
 
-Without a key, route preview gracefully falls back to simple start/end segment.
-
-## Day 2 ideas
-
-- Real ORS route fetch on destination confirmation.
-- Better map markers and custom icons.
-- Bottom sheet interaction states.
-- Route instructions and ETA presentation.
-- PWA manifest, service worker, and offline tile strategy.
+If keys are missing, the app still works with graceful AI/route fallback behavior.

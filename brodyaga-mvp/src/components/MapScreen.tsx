@@ -2,18 +2,23 @@
 
 import "leaflet/dist/leaflet.css";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapContainer, Marker, Polyline, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import type { LatLngExpression } from "leaflet";
 
-const DEFAULT_CENTER: LatLngExpression = [50.4501, 30.5234];
+import { fetchRoutePreview } from "@/lib/openRouteService";
+import type { AiRouteResult } from "@/lib/aiRoute";
+
+const MOSCOW_MKAD_CENTER: LatLngExpression = [55.751244, 37.618423];
 
 function RecenterOnUser({ center }: { center: LatLngExpression | null }) {
   const map = useMap();
 
-  if (center) {
-    map.setView(center, 15, { animate: true });
-  }
+  useEffect(() => {
+    if (center) {
+      map.setView(center, 14, { animate: true });
+    }
+  }, [center, map]);
 
   return null;
 }
@@ -29,31 +34,71 @@ function TapToSetDestination({ onSetDestination }: { onSetDestination: (point: [
 export default function MapScreen() {
   const [currentPosition, setCurrentPosition] = useState<[number, number] | null>(null);
   const [destination, setDestination] = useState<[number, number] | null>(null);
+  const [path, setPath] = useState<[number, number][]>([]);
+  const [requestText, setRequestText] = useState("");
+  const [loadingAi, setLoadingAi] = useState(false);
+  const [aiResult, setAiResult] = useState<AiRouteResult | null>(null);
+  const [geoStatus, setGeoStatus] = useState("Using default Moscow focus");
 
-  const routePreview = useMemo(() => {
-    if (!currentPosition || !destination) return [];
-    return [currentPosition, destination];
+  useEffect(() => {
+    if (!currentPosition || !destination) {
+      setPath([]);
+      return;
+    }
+
+    fetchRoutePreview(currentPosition, destination)
+      .then((route) => setPath(route.coordinates))
+      .catch(() => setPath([currentPosition, destination]));
   }, [currentPosition, destination]);
 
-  const requestGeo = () => {
-    if (!navigator.geolocation) return;
+  const routePreview = useMemo(() => {
+    if (path.length > 1) return path;
+    if (!currentPosition || !destination) return [];
+    return [currentPosition, destination];
+  }, [path, currentPosition, destination]);
 
+  const requestGeo = () => {
+    if (!navigator.geolocation) {
+      setGeoStatus("Geolocation unavailable");
+      return;
+    }
+
+    setGeoStatus("Locating...");
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setCurrentPosition([position.coords.latitude, position.coords.longitude]);
+        setGeoStatus("Live position locked");
       },
-      () => undefined,
+      () => {
+        setGeoStatus("Location blocked, using Moscow");
+      },
       {
-        enableHighAccuracy: false,
-        maximumAge: 30_000,
-        timeout: 15_000
+        enableHighAccuracy: true,
+        maximumAge: 15_000,
+        timeout: 12_000
       }
     );
   };
 
+  const runAiRoute = async () => {
+    if (!requestText.trim()) return;
+    setLoadingAi(true);
+    try {
+      const response = await fetch("/api/ai-route", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: requestText })
+      });
+      const data = (await response.json()) as AiRouteResult;
+      setAiResult(data);
+    } finally {
+      setLoadingAi(false);
+    }
+  };
+
   return (
     <main className="map-shell">
-      <MapContainer center={DEFAULT_CENTER} zoom={14} zoomControl={false} className="h-full w-full">
+      <MapContainer center={MOSCOW_MKAD_CENTER} zoom={11} zoomControl={false} className="h-full w-full">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -72,19 +117,38 @@ export default function MapScreen() {
       <button
         type="button"
         onClick={requestGeo}
-        className="absolute right-4 top-4 z-[1000] h-14 w-14 rounded-full border border-cyan-300/40 bg-slate-900/85 text-2xl text-cyan-200 shadow-lg shadow-cyan-500/20 backdrop-blur active:scale-95"
+        className="absolute right-3 top-3 z-[1000] h-12 w-12 rounded-full border border-cyan-300/40 bg-slate-900/85 text-xl text-cyan-200 shadow-lg shadow-cyan-500/20 backdrop-blur active:scale-95"
         aria-label="Use current location"
       >
         ⦿
       </button>
 
-      <section className="absolute bottom-0 left-0 right-0 z-[1000] rounded-t-3xl border-t border-cyan-300/25 bg-slate-950/90 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
-        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-cyan-200/50" />
-        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/80">БРОДЯГА Navigator</p>
-        <div className="mt-2 flex items-center justify-between">
-          <p className="text-sm text-slate-200">Tap map to set destination</p>
-          <span className="rounded-full border border-cyan-300/30 px-3 py-1 text-xs text-cyan-200">Day 1 MVP</span>
+      <section className="ai-panel">
+        <p className="text-[10px] uppercase tracking-[0.25em] text-cyan-300/80">БРОДЯГА AI / Day 2</p>
+        <div className="mt-2 flex gap-2">
+          <input
+            value={requestText}
+            onChange={(event) => setRequestText(event.target.value)}
+            placeholder="night ride near water"
+            className="flex-1 rounded-xl border border-cyan-300/25 bg-slate-900/80 px-3 py-2 text-sm text-cyan-50 outline-none placeholder:text-slate-400"
+          />
+          <button onClick={runAiRoute} disabled={loadingAi} className="rounded-xl bg-cyan-300/90 px-3 text-xs font-semibold text-slate-900 disabled:opacity-50">
+            {loadingAi ? "..." : "SCAN"}
+          </button>
         </div>
+        <p className="mt-2 text-[11px] text-cyan-100/75">{geoStatus}</p>
+      </section>
+
+      <section className="bottom-sheet">
+        <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-cyan-200/50" />
+        <p className="text-xs text-slate-200">Tap map to place destination.</p>
+        {aiResult ? (
+          <>
+            <p className="mt-2 text-sm text-cyan-100">{aiResult.summary}</p>
+            <p className="mt-2 text-xs text-cyan-200/90">Challenge: {aiResult.challenge}</p>
+            <pre className="mt-2 max-h-32 overflow-auto rounded-lg bg-slate-900/70 p-2 text-[10px] text-cyan-100">{JSON.stringify(aiResult.preferences, null, 2)}</pre>
+          </>
+        ) : null}
       </section>
     </main>
   );
